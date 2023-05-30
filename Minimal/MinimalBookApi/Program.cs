@@ -40,6 +40,26 @@ app.MapGet("/book/{id}", (int id) =>
     return Results.Ok(book);
 });
 
+app.MapPost("/book", (Book book) =>
+{
+    books.Add(book);
+    return books;
+});
+
+app.MapPut("/book/{id}", (Book UpdatedBook,int id) =>
+{
+    var book = books.Find(b => b.Id == id);
+
+    if (book is null)
+        return Results.NotFound("this book cannot found ");
+
+    book.Title = UpdatedBook.Title;
+    book.Author = UpdatedBook.Author;
+
+    return Results.Ok(book);
+});
+
+
 app.Run();
 
 
