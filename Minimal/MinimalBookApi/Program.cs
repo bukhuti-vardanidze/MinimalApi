@@ -26,36 +26,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var books = new List<Book>()
-{
-    new Book {Id = 1, Title = "Harry Potter", Author = "BUU"},
-    new Book {Id = 2, Title = "House of the dragons", Author = "Jon"},
-    new Book {Id = 3, Title = "GOT", Author = "jrr Martin"}
-};
+  //     Version 2 with DataBase
 
 app.MapGet("/book",async (DataContext context) =>
      await context.Books.ToListAsync());
 
 
-app.MapGet("/book/{id}", (int id) =>
+app.MapGet("/book/{id}", async (DataContext context, int id) =>
+    await context.Books.FindAsync(id) is Book book ?
+           Results.Ok(book) :
+           Results.NotFound("Book Not Found !"));
+
+app.MapPost("/book", async (DataContext context, Book book) =>
 {
-    var book = books.Find(b => b.Id == id);
-
-    if (book is null)
-        return Results.NotFound("this book cannot found ");
-
-    return Results.Ok(book);
+    context.Books.Add(book);
+    await context.SaveChangesAsync();
+    return Results.Ok(await context.Books.ToListAsync());
 });
 
-app.MapPost("/book", (Book book) =>
+app.MapPut("/book/{id}", async (DataContext context, Book UpdatedBook, int id) =>
 {
-    books.Add(book);
-    return books;
-});
-
-app.MapPut("/book/{id}", (Book UpdatedBook,int id) =>
-{
-    var book = books.Find(b => b.Id == id);
+    var book =await context.Books.FindAsync( id);
 
     if (book is null)
         return Results.NotFound("this book cannot found ");
@@ -63,21 +54,25 @@ app.MapPut("/book/{id}", (Book UpdatedBook,int id) =>
     book.Title = UpdatedBook.Title;
     book.Author = UpdatedBook.Author;
 
+    await context.SaveChangesAsync();
     return Results.Ok(book);
 });
 
-
-app.MapDelete("/book/{id}", (int id) =>
+app.MapDelete("/book/{id}",async (DataContext context, int id) =>
 {
-    var book = books.Find(b => b.Id == id);
+    var book =await context.Books.FindAsync(id);
 
     if (book is null)
         return Results.NotFound("this book cannot found ");
 
-    books.Remove(book);
+    context.Books.Remove(book);
+    await context.SaveChangesAsync();
 
-    return Results.Ok(book);
+    return Results.Ok(await context.Books.ToListAsync());
 });
+
+
+
 
 app.Run();
 
@@ -89,3 +84,51 @@ public class Book
     public required string Author { get; set; }
 }
 
+
+
+
+//***************   Version 1
+
+
+
+//app.MapGet("/book/{id}", (int id) =>
+//{
+//    var book = books.Find(b => b.Id == id);
+
+//    if (book is null)
+//        return Results.NotFound("this book cannot found ");
+
+//    return Results.Ok(book);
+//});
+
+//app.MapPost("/book", (Book book) =>
+//{
+//    books.Add(book);
+//    return books;
+//});
+
+//app.MapPut("/book/{id}", (Book UpdatedBook,int id) =>
+//{
+//    var book = books.Find(b => b.Id == id);
+
+//    if (book is null)
+//        return Results.NotFound("this book cannot found ");
+
+//    book.Title = UpdatedBook.Title;
+//    book.Author = UpdatedBook.Author;
+
+//    return Results.Ok(book);
+//});
+
+
+//app.MapDelete("/book/{id}", (int id) =>
+//{
+//    var book = books.Find(b => b.Id == id);
+
+//    if (book is null)
+//        return Results.NotFound("this book cannot found ");
+
+//    books.Remove(book);
+
+//    return Results.Ok(book);
+//});
