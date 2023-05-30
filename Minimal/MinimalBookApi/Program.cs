@@ -1,4 +1,7 @@
-using Microsoft.AspNetCore.Http.HttpResults;
+
+
+using Microsoft.EntityFrameworkCore;
+using MinimalBookApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddDbContext<DataContext>(options =>
+         options.UseSqlServer(builder.Configuration
+         .GetConnectionString("MinimalConnectionStrings")));
 
 var app = builder.Build();
 
@@ -25,10 +33,9 @@ var books = new List<Book>()
     new Book {Id = 3, Title = "GOT", Author = "jrr Martin"}
 };
 
-app.MapGet("/book", () =>
-{
-    return books;
-});
+app.MapGet("/book",async (DataContext context) =>
+     await context.Books.ToListAsync());
+
 
 app.MapGet("/book/{id}", (int id) =>
 {
@@ -75,7 +82,7 @@ app.MapDelete("/book/{id}", (int id) =>
 app.Run();
 
 
-class Book
+public class Book
 {
     public int Id { get; set; }
     public required string Title { get; set; }
